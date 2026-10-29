@@ -1,0 +1,8 @@
+{
+  "name": "arah-assist-notch",
+  "productName": "Arah Assist Notch",
+  "version": "1.0.0",
+  "description": "Dynamic Notch Arah Assist untuk desktop: rak file, rencana dengan AI, dan pengingat ACC / Snooze.",
+  "author": "Arah Assist",
+  "main": "main.cjs"
+}

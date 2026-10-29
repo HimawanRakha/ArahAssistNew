@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { LandingHero, LandingRibbons } from "@/components/landing/LandingHero";
+import { InstallGuide } from "@/components/landing/InstallGuide";
 
 const FLOW = [
   {
@@ -59,6 +60,8 @@ export default async function Home() {
             </ol>
           </div>
         </section>
+
+        <InstallGuide />
 
         <section id="peran" aria-labelledby="peran-judul" className="mt-2 scroll-mt-3 rounded-[34px] bg-kertas px-4 py-24 sm:mt-3 sm:rounded-[48px] sm:px-8">
           <div className="mx-auto max-w-6xl">

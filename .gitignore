@@ -43,3 +43,6 @@ next-env.d.ts
 
 # database lokal PGlite
 /.data
+
+# installer Notch desktop (diunggah ke GitHub Releases, bukan ke git)
+/dist-desktop

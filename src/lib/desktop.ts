@@ -12,8 +12,10 @@ export type ArahDesktopBridge = {
   openLogin: () => void;
   /** Perintah dari aplikasi desktop: pintasan global atau menu tray */
   onCommand: (callback: (command: "plan" | "open-workspace") => void) => () => void;
-  /** Pengaturan tersimpan aplikasi desktop */
-  getSettings: () => Promise<{ dock: NotchEdge }>;
+  /** Pengaturan tersimpan aplikasi desktop. canAutoStart hanya true pada versi installer. */
+  getSettings: () => Promise<{ dock: NotchEdge; openAtLogin: boolean; canAutoStart: boolean }>;
+  /** Nyalakan/matikan Notch otomatis saat Windows menyala */
+  setAutoStart: (on: boolean) => void;
   /** Pindahkan Notch ke tepi atas, kiri, atau kanan layar */
   setDock: (dock: NotchEdge) => void;
   /** Mulai/akhiri menyeret Notch; selama diseret jendela mengikuti kursor, lalu menempel ke tepi terdekat */

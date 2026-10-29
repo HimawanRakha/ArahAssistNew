@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("arahDesktop", {
   },
   getSettings: () => ipcRenderer.invoke("notch:get-settings"),
   setDock: (dock) => ipcRenderer.send("notch:set-dock", String(dock)),
+  setAutoStart: (on) => ipcRenderer.send("notch:set-auto-start", Boolean(on)),
   dragStart: () => ipcRenderer.send("notch:drag-start"),
   dragEnd: () => ipcRenderer.send("notch:drag-end"),
   onDock: (callback) => {

@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Download,
   FolderOpen,
   ListChecks,
   Pause,
@@ -22,6 +23,7 @@ import { NotchShell, type NotchMode } from "@/components/notch/NotchShell";
 import { IdleView, PlanView, ReminderView, ResultView, ShelfView, WorkingView } from "@/components/notch/Notch";
 import { LogoMark } from "@/components/LogoMark";
 import { useNow } from "@/lib/useNow";
+import { NOTCH_DOWNLOAD_SIZE, NOTCH_DOWNLOAD_URL } from "@/lib/download";
 import type { ShelfFileDTO, TodoDTO } from "@/lib/types";
 
 const STATES: { id: Exclude<NotchMode, "peek">; label: string; icon: LucideIcon; caption: string }[] = [
@@ -163,6 +165,9 @@ export function LandingHero({ signedIn }: { signedIn: boolean }) {
             <a href="#peran" className="hidden rounded-full px-3.5 py-2 text-kertas/85 hover:text-kertas md:inline-block">
               Notch dan Workspace
             </a>
+            <a href="#pasang" className="hidden rounded-full px-3.5 py-2 text-kertas/85 hover:text-kertas md:inline-block">
+              Pasang Notch
+            </a>
             <div className="ml-auto hidden items-center gap-1 sm:flex">
               {signedIn ? (
                 <CtaPill href="/workspace">Buka Workspace</CtaPill>
@@ -188,6 +193,7 @@ export function LandingHero({ signedIn }: { signedIn: boolean }) {
 
           {/* Kolom tengah dibuat tetap agar teks di kiri dan kanan tidak melompat saat keadaan Notch berganti */}
           <div className="relative z-10 mt-10 grid flex-1 grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-2 hero:grid-cols-[minmax(0,1fr)_680px_minmax(0,1fr)] hero:items-start hero:gap-x-12">
+            <RibbonPair className="absolute -inset-x-12 top-[22rem] -z-10 hidden h-24 hero:block" />
             <div className="order-2 hero:order-1 hero:pt-6">
               <h1 className="max-w-[17ch] text-[clamp(1.6rem,2.1vw,2.2rem)] font-bold leading-[1.12] tracking-[-0.025em]">
                 Ketik rencanamu sekali. Notch yang menjaga arahnya.
@@ -271,15 +277,29 @@ export function LandingHero({ signedIn }: { signedIn: boolean }) {
               <div className="flex items-start gap-3">
                 <LogoMark size={44} animated />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-bold leading-tight">Notch untuk desktop</p>
+                  <p className="text-[15px] font-bold leading-tight">Notch untuk Windows</p>
                   <p className="mt-1 text-[12.5px] leading-snug text-kertas/80">
-                    Jalankan aplikasi Notch, lalu arahkan kursor ke tepi layar. Pintasannya Alt + Space.
+                    Pasang sekali, Notch menyala sendiri setiap laptop dibuka.
                   </p>
                 </div>
               </div>
-              <code className="mt-3 block rounded-[14px] bg-malam/80 px-3.5 py-2.5 font-mono text-[12.5px] text-kabut">
-                npm run notch
-              </code>
+              <div className="mt-3.5 flex items-center gap-2">
+                <a
+                  href={NOTCH_DOWNLOAD_URL}
+                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-kertas text-[14px] font-bold text-arus-deep transition-transform hover:-translate-y-0.5"
+                >
+                  <Download size={16} aria-hidden />
+                  <span className="sm:hidden">Unduh</span>
+                  <span className="hidden sm:inline">Unduh untuk Windows</span>
+                </a>
+                <a
+                  href="#pasang"
+                  className="inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-kertas/90 ring-1 ring-inset ring-white/30 hover:bg-white/10"
+                >
+                  Cara pasang
+                </a>
+              </div>
+              <p className="mt-2 text-[11.5px] text-kertas/65">Windows 10 dan 11, {NOTCH_DOWNLOAD_SIZE}</p>
             </div>
           </div>
         </div>
@@ -321,32 +341,39 @@ function ArrowScribble() {
   );
 }
 
-/** Dua pita berjalan "Arah Assist" yang menyilang di bawah hero */
+/** Pita berjalan di bawah hero untuk layar sempit; di layar lebar pita berada di dalam hero */
 export function LandingRibbons() {
+  return <RibbonPair className="relative z-10 -mt-9 h-24 hero:hidden" />;
+}
+
+/** Dua pita berjalan "Arah Assist" yang menyilang, tipis dan tenang */
+function RibbonPair({ className }: { className: string }) {
   return (
-    <div aria-hidden className="pointer-events-none relative z-10 -mt-10 h-32 overflow-hidden sm:-mt-12 sm:h-36">
-      <Ribbon className="top-9 -rotate-[2.5deg] bg-malam text-kertas" duration="42s" />
-      <Ribbon className="top-12 rotate-[1.8deg] bg-kertas text-malam shadow-[0_18px_40px_-20px_rgba(12,29,50,0.45)]" duration="34s" reverse />
+    <div aria-hidden className={`pointer-events-none overflow-hidden ${className}`}>
+      <Ribbon className="top-7 -rotate-[2deg] bg-malam/90 text-kertas" duration="56s" />
+      <Ribbon
+        className="top-9 rotate-[1.4deg] bg-kertas/95 text-malam shadow-[0_14px_30px_-18px_rgba(12,29,50,0.45)]"
+        duration="46s"
+        reverse
+      />
     </div>
   );
 }
 
 function Ribbon({ className, duration, reverse = false }: { className: string; duration: string; reverse?: boolean }) {
-  const items = Array.from({ length: 8 });
+  const items = Array.from({ length: 14 });
   const run = (
-    <span className="flex shrink-0 items-center gap-6 pr-6">
+    <span className="flex shrink-0 items-center gap-5 pr-5">
       {items.map((_, i) => (
-        <span key={i} className="flex items-center gap-6">
-          <span className="whitespace-nowrap">
-            <span className="font-bold tracking-[-0.025em]">Arah Assist</span>
-          </span>
-          <LogoMark size={30} />
+        <span key={i} className="flex items-center gap-5">
+          <span className="whitespace-nowrap font-semibold tracking-[-0.01em]">Arah Assist</span>
+          <LogoMark size={18} />
         </span>
       ))}
     </span>
   );
   return (
-    <div className={`absolute -left-[5%] w-[110%] py-2.5 text-[clamp(1.4rem,2.8vw,2.3rem)] leading-none ${className}`}>
+    <div className={`absolute -left-[5%] w-[110%] py-2 text-[clamp(0.9rem,1.2vw,1.1rem)] leading-none ${className}`}>
       <div className={`marquee-track flex w-max ${reverse ? "marquee-reverse" : ""}`} style={{ ["--marquee-duration" as string]: duration }}>
         {run}
         {run}

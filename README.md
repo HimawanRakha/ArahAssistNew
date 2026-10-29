@@ -51,6 +51,22 @@ ARAH_URL=https://arah-assist.vercel.app npm run notch
 | `GEMINI_MODEL` | Tidak | Daftar model dipisah koma, default `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash`. Jika model pertama sibuk atau belum menjawab dalam 6 detik, model berikutnya ikut dicoba dan jawaban tercepat dipakai. Setelah 30 detik tanpa jawaban, rencana dipecah oleh parser lokal. |
 | `AUTH_SECRET` | Ya, di production | Rahasia penanda tangan cookie sesi (string acak 32 byte). |
 
+### Installer Windows (Notch desktop)
+
+```bash
+npm run notch:dist
+```
+
+Hasilnya `dist-desktop/ArahAssist-Notch-Setup.exe` (±110 MB). Versi installer otomatis terhubung ke `https://arah-assist.vercel.app` dan menyala sendiri setiap Windows dinyalakan (bisa dimatikan di Pengaturan Notch atau menu tray).
+
+Unggah installer agar tombol **Unduh untuk Windows** di website berfungsi:
+
+1. Buka repo di GitHub, lalu **Releases** → **Draft a new release**.
+2. Buat tag baru (misalnya `v1.0.0`), beri judul, lalu lampirkan `dist-desktop/ArahAssist-Notch-Setup.exe` dengan nama file yang sama persis.
+3. Klik **Publish release** (bukan draft atau pre-release).
+
+Tombol unduh memakai `https://github.com/HimawanRakha/ArahAssistNew/releases/latest/download/ArahAssist-Notch-Setup.exe`, jadi selalu mengarah ke release terbaru. Bisa diganti lewat env `NEXT_PUBLIC_NOTCH_DOWNLOAD_URL`.
+
 ### Deploy ke Vercel
 
 1. Push repo ke GitHub, lalu import di Vercel.

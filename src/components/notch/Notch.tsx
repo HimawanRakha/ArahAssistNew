@@ -47,6 +47,9 @@ type NotchProps = {
   dragProps?: HTMLAttributes<HTMLDivElement>;
   soundOn: boolean;
   onSoundChange: (on: boolean) => void;
+  /** Menyala otomatis saat Windows menyala; available false di luar versi installer */
+  autoStart: { on: boolean; available: boolean };
+  onAutoStartChange: (on: boolean) => void;
   files: ShelfFileDTO[];
   todos: TodoDTO[];
   uploading: boolean;
@@ -164,6 +167,8 @@ export function Notch(props: NotchProps) {
                   onDockChange={props.onDockChange}
                   soundOn={props.soundOn}
                   onSoundChange={props.onSoundChange}
+                  autoStart={props.autoStart}
+                  onAutoStartChange={props.onAutoStartChange}
                   onLogout={props.onLogout}
                 />
               )}
@@ -621,6 +626,8 @@ export function SettingsView({
   onDockChange,
   soundOn,
   onSoundChange,
+  autoStart,
+  onAutoStartChange,
   onLogout,
 }: {
   userName: string;
@@ -628,6 +635,8 @@ export function SettingsView({
   onDockChange: (dock: NotchEdge) => void;
   soundOn: boolean;
   onSoundChange: (on: boolean) => void;
+  autoStart: { on: boolean; available: boolean };
+  onAutoStartChange: (on: boolean) => void;
   onLogout: () => void;
 }) {
   return (
@@ -669,6 +678,26 @@ export function SettingsView({
             role="switch"
             checked={soundOn}
             onChange={(e) => onSoundChange(e.target.checked)}
+            className="h-5 w-5 accent-[var(--color-arus)]"
+          />
+        </label>
+        <label
+          className={`flex items-center justify-between gap-3 rounded-[16px] bg-white/[0.04] px-3.5 py-3 ${
+            autoStart.available ? "" : "opacity-60"
+          }`}
+        >
+          <span>
+            <span className="block text-[13px] font-semibold">Nyalakan saat Windows menyala</span>
+            <span className="block text-[11.5px] text-kabut/70">
+              {autoStart.available ? "Notch langsung siap setiap laptop dibuka" : "Tersedia di versi installer"}
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={autoStart.on}
+            disabled={!autoStart.available}
+            onChange={(e) => onAutoStartChange(e.target.checked)}
             className="h-5 w-5 accent-[var(--color-arus)]"
           />
         </label>

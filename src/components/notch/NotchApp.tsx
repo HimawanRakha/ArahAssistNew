@@ -48,12 +48,16 @@ export function NotchApp({ user, initialTodos, initialFiles }: Props) {
 
   // ---- Posisi Notch (atas, kiri, atau kanan layar) disimpan oleh aplikasi desktop
   const [dock, setDock] = useState<NotchEdge>("top");
+  const [autoStart, setAutoStart] = useState({ on: false, available: false });
   useEffect(() => {
     const bridge = desktopBridge();
     if (!bridge) return;
     bridge
       .getSettings()
-      .then((settings) => setDock(settings.dock))
+      .then((settings) => {
+        setDock(settings.dock);
+        setAutoStart({ on: settings.openAtLogin, available: settings.canAutoStart });
+      })
       .catch(() => {});
     return bridge.onDock(setDock);
   }, []);
@@ -257,6 +261,11 @@ export function NotchApp({ user, initialTodos, initialFiles }: Props) {
       }}
       dragging={dragging}
       dragProps={dragProps}
+      autoStart={autoStart}
+      onAutoStartChange={(on) => {
+        setAutoStart((a) => ({ ...a, on }));
+        desktopBridge()?.setAutoStart(on);
+      }}
       soundOn={soundOn}
       onSoundChange={(on) => {
         setSoundOn(on);

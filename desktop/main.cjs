@@ -15,7 +15,10 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 
-const BASE_URL = (process.env.ARAH_URL || "http://localhost:3000").replace(/\/$/, "");
+// Versi installer terhubung ke server produksi; saat development (npm run notch) ke server lokal.
+// ARAH_URL selalu bisa menimpa keduanya.
+const PRODUCTION_URL = "https://arah-assist.vercel.app";
+const BASE_URL = (process.env.ARAH_URL || (app.isPackaged ? PRODUCTION_URL : "http://localhost:3000")).replace(/\/$/, "");
 const ORIGIN = new URL(BASE_URL).origin;
 
 // Jendela dibuat sedikit lebih besar dari kapsul agar bayangannya tidak terpotong.
@@ -51,7 +54,8 @@ let drag = null;
 
 // Pengaturan Notch (posisi) disimpan di folder data aplikasi
 const settingsFile = () => path.join(app.getPath("userData"), "notch-settings.json");
-let settings = { dock: "top", displayId: null };
+// openAtLogin: null berarti belum pernah diatur; versi installer menyalakannya otomatis saat pertama dijalankan
+let settings = { dock: "top", displayId: null, openAtLogin: null };
 
 function loadSettings() {
   try {
@@ -60,6 +64,25 @@ function loadSettings() {
     // belum pernah disimpan: pakai bawaan
   }
   if (!DOCKS.includes(settings.dock)) settings.dock = "top";
+}
+
+// Menyala otomatis saat Windows dinyalakan. Hanya untuk versi installer: saat development,
+// yang terdaftar adalah electron.exe milik proyek, jadi pengaturan ini dilewati.
+function applyAutoStart() {
+  if (!app.isPackaged) return;
+  if (settings.openAtLogin === null) {
+    settings = { ...settings, openAtLogin: true };
+    saveSettings();
+  }
+  app.setLoginItemSettings({ openAtLogin: settings.openAtLogin });
+}
+
+function setAutoStart(on) {
+  if (!app.isPackaged) return;
+  settings = { ...settings, openAtLogin: Boolean(on) };
+  saveSettings();
+  app.setLoginItemSettings({ openAtLogin: settings.openAtLogin });
+  createTray();
 }
 
 function saveSettings() {
@@ -244,8 +267,11 @@ function trayIcon() {
 }
 
 function createTray() {
-  tray = new Tray(trayIcon());
-  tray.setToolTip("Arah Assist Notch");
+  if (!tray) {
+    tray = new Tray(trayIcon());
+    tray.setToolTip("Arah Assist Notch");
+    tray.on("click", () => sendCommand("plan"));
+  }
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
@@ -254,11 +280,20 @@ function createTray() {
       },
       { label: "Buka Workspace di browser", click: () => sendCommand("open-workspace") },
       { label: "Muat ulang Notch", click: () => notchWin?.reload() },
+      ...(app.isPackaged
+        ? [
+            {
+              label: "Nyalakan saat Windows menyala",
+              type: "checkbox",
+              checked: Boolean(settings.openAtLogin),
+              click: (item) => setAutoStart(item.checked),
+            },
+          ]
+        : []),
       { type: "separator" },
       { label: "Keluar", click: () => app.quit() },
     ]),
   );
-  tray.on("click", () => sendCommand("plan"));
 }
 
 // Membesar langsung (sebelum animasi kapsul), mengecil setelah animasi kapsul selesai
@@ -287,7 +322,16 @@ ipcMain.on("notch:open-login", (event) => {
   openLogin();
 });
 
-ipcMain.handle("notch:get-settings", () => ({ dock: settings.dock }));
+ipcMain.handle("notch:get-settings", () => ({
+  dock: settings.dock,
+  openAtLogin: Boolean(settings.openAtLogin),
+  canAutoStart: app.isPackaged,
+}));
+
+ipcMain.on("notch:set-auto-start", (event, on) => {
+  if (!notchWin || event.sender !== notchWin.webContents) return;
+  setAutoStart(on);
+});
 
 ipcMain.on("notch:set-dock", (event, dock) => {
   if (!notchWin || event.sender !== notchWin.webContents || !DOCKS.includes(dock)) return;
@@ -324,6 +368,7 @@ app.on("second-instance", () => sendCommand("plan"));
 app.whenReady().then(() => {
   app.setAppUserModelId("Arah Assist");
   loadSettings();
+  applyAutoStart();
   createNotch();
   registerShortcut();
   createTray();
