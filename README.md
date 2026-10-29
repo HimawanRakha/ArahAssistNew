@@ -15,6 +15,7 @@ Dibuat untuk UINIC 8.0 dan LOGICODIX 2026.
 | 2. Quick plan input | Notch desktop, tab **Rencana** | `Alt + Space` dari aplikasi mana pun (atau klik Notch, atau `Ctrl + K` saat Notch aktif). Ketik rencana dengan bahasa santai, lalu **Buat To-Do List dengan AI** (`Ctrl + Enter`). |
 | 3. To-Do List permanen | Workspace web | Satu tab map per hari (Terlewat, Hari ini, Besok, ..., Tanpa jam, Riwayat). Setiap tab berisi timeline tugas, metrik, dan cincin ketercapaian. Setiap kartu punya node selesai, jam, lampiran, status, tombol **Aktifkan reminder**, dan ikon **edit** untuk mengubah judul, tanggal, dan jam (pengingat yang aktif ikut pindah ke jam baru). |
 | 4. Reminder ACC / Snooze | Notch desktop, otomatis | Saat jam tugas tiba, Notch melebar dengan bunyi halus walaupun browser tertutup. **ACC** mengubah status menjadi *Sedang dikerjakan (ACC)*. **Snooze** menunda 5, 10, atau 15 menit. |
+| 5. Pengingat di HP | Workspace web, kartu **Pengingat di HP** | Pasang website ke layar utama HP, lalu tekan **Aktifkan notifikasi**. Pengingat yang sama muncul sebagai notifikasi dengan tombol **ACC** dan **Snooze 10 mnt**, walau aplikasi tertutup. Lihat [Notifikasi HP](#notifikasi-hp-pwa--web-push). |
 
 Di desktop, Notch diam sebagai kapsul kecil hitam glassy berisi maskot yang berkedip dan jam, dan membesar ke bentuk normal saat kursor diarahkan ke sana. Notch bisa **diseret** ke tepi atas, kiri, atau kanan layar (posisi tersimpan), atau dipindah lewat tab **Pengaturan** (ikon gerigi) yang juga berisi bunyi pengingat dan tombol keluar. Tab **Dashboard** menampilkan jam besar, tanggal, dan zona waktu. Tugas juga bisa ditambah **manual** tanpa AI, lewat tombol **+** di atas daftar "Hari ini" pada panel Rencana di Notch, atau tombol **Tambah tugas** di Workspace. Notch punya 4 keadaan: Idle (jam, jumlah tugas aktif, jumlah file), File Shelf, Plan Input, dan Reminder Alert.
 
@@ -50,6 +51,9 @@ ARAH_URL=https://arah-assist.vercel.app npm run notch
 | `GEMINI_API_KEY` | Disarankan | API key dari https://aistudio.google.com/apikey. Jika kosong atau Gemini gagal, rencana dipecah oleh parser lokal berbasis aturan, jadi demo tetap jalan. |
 | `GEMINI_MODEL` | Tidak | Daftar model dipisah koma, default `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash`. Jika model pertama sibuk atau belum menjawab dalam 6 detik, model berikutnya ikut dicoba dan jawaban tercepat dipakai. Setelah 30 detik tanpa jawaban, rencana dipecah oleh parser lokal. |
 | `AUTH_SECRET` | Ya, di production | Rahasia penanda tangan cookie sesi (string acak 32 byte). |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Untuk notifikasi HP | Sepasang kunci web push dari `npx web-push generate-vapid-keys`. Jika kosong, kartu **Pengingat di HP** menampilkan "belum dikonfigurasi". |
+| `VAPID_SUBJECT` | Tidak | Kontak pemilik server push, default `https://arah-assist.vercel.app`. |
+| `CRON_SECRET` | Untuk notifikasi HP | Token rahasia penjadwal `/api/cron/reminders` (string acak). |
 
 ### Installer Windows (Notch desktop)
 
@@ -70,8 +74,32 @@ Tombol unduh memakai `https://github.com/HimawanRakha/ArahAssistNew/releases/lat
 ### Deploy ke Vercel
 
 1. Push repo ke GitHub, lalu import di Vercel.
-2. Isi `DATABASE_URL`, `GEMINI_API_KEY`, dan `AUTH_SECRET` di Project Settings > Environment Variables.
+2. Isi `DATABASE_URL`, `GEMINI_API_KEY`, `AUTH_SECRET`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, dan `CRON_SECRET` di Project Settings > Environment Variables. Kunci yang diawali `NEXT_PUBLIC_` ikut ditanam saat build, jadi deploy ulang setiap kali nilainya diubah.
 3. Deploy. File di rak Notch disimpan di Postgres (base64), jadi aman di filesystem serverless Vercel.
+4. Pasang penjadwal notifikasi HP (lihat bagian berikut).
+
+### Notifikasi HP (PWA + web push)
+
+Notch hanya ada di Windows. Di HP, Arah Assist dipasang sebagai PWA dan pengingat dikirim lewat web push:
+
+1. Server menyimpan langganan notifikasi tiap perangkat di tabel `push_subscriptions` (dibuat otomatis).
+2. Setiap menit, layanan cron memanggil `GET /api/cron/reminders`. Endpoint ini mencari pengingat yang jatuh tempo (maksimal 2 jam lalu, belum ACC, tugas belum selesai), menandainya di kolom `task_reminders.pushed_for` agar tidak terkirim ganda, lalu mengirim notifikasi ke semua perangkat pemilik tugas. Snooze membuat jadwal baru, jadi notifikasi dikirim lagi saat waktunya tiba.
+3. Service worker `public/sw.js` menampilkan notifikasi. Tombol **ACC** dan **Snooze 10 mnt** langsung memanggil `/api/todos/[id]/reminder` dengan sesi pengguna, tanpa membuka aplikasi. Mengetuk notifikasi membuka Workspace.
+
+**Penjadwal.** Vercel Cron di paket Hobby hanya bisa berjalan sekali sehari, jadi pakai layanan cron gratis seperti [cron-job.org](https://cron-job.org):
+
+1. Daftar, lalu **Create cronjob**.
+2. URL: `https://arah-assist.vercel.app/api/cron/reminders`, jadwal **Every minute**.
+3. Di tab **Advanced** > **Headers**, tambahkan `Authorization` dengan nilai `Bearer <CRON_SECRET>`. Token hanya diterima lewat header (bukan query string) agar tidak tercatat di log.
+4. Simpan. Respons sukses berbentuk `{"due":0,"sent":0}`.
+
+Di paket Vercel Pro, penjadwal bisa diganti Vercel Cron dengan `vercel.json` berisi `{"crons":[{"path":"/api/cron/reminders","schedule":"* * * * *"}]}`. Vercel otomatis mengirim header `Authorization: Bearer <CRON_SECRET>`.
+
+**Memasang di HP:**
+
+- **Android (Chrome)**: buka website, menu ⋮ > **Tambahkan ke layar utama** (atau **Instal aplikasi**). Masuk, lalu di Workspace tekan **Aktifkan notifikasi** dan izinkan.
+- **iPhone (Safari, iOS 16.4 ke atas)**: notifikasi web hanya berjalan dari layar utama. Ketuk **Bagikan** > **Tambahkan ke Layar Utama**, buka Arah Assist dari ikon tersebut, masuk, lalu tekan **Aktifkan notifikasi**.
+- Tekan **Kirim tes** untuk memastikan notifikasi sampai. Fitur ini juga bisa dipakai di browser laptop.
 
 ## Arsitektur
 
@@ -79,7 +107,8 @@ Tombol unduh memakai `https://github.com/HimawanRakha/ArahAssistNew/releases/lat
 - Notch desktop dan Workspace web saling sinkron setiap 15 detik dan setiap kali jendela kembali difokus.
 
 - **Next.js 16** (App Router) + Tailwind CSS 4 + Motion untuk animasi Notch.
-- **Drizzle ORM** di atas Neon serverless (HTTP), skema di `src/lib/db/schema.ts` mengikuti brief: `users`, `workspaces`, `todo_items`, `notch_temp_files`, `task_reminders`.
+- **Drizzle ORM** di atas Neon serverless (HTTP), skema di `src/lib/db/schema.ts` mengikuti brief: `users`, `workspaces`, `todo_items`, `notch_temp_files`, `task_reminders`, ditambah `push_subscriptions` untuk notifikasi HP.
+- **PWA**: `src/app/manifest.ts`, service worker `public/sw.js`, pengiriman web push di `src/lib/push.ts` (VAPID).
 - **Auth**: email + kata sandi (bcrypt), sesi JWT di cookie httpOnly.
 - **AI**: `src/lib/ai.ts` memanggil Gemini dengan JSON schema terstruktur. Gemini menerima daftar file di rak agar bisa memilih file yang relevan untuk tiap tugas.
 
@@ -99,6 +128,9 @@ src/
       plan/               kalimat rencana -> AI -> todo_items + lampiran
       todos/[id]/         status, hapus, reminder (enable/disable/acc/snooze)
       files/[id]/         unggah, unduh, tempel ke tugas, hapus
+      push/               langganan notifikasi HP, kirim tes
+      cron/reminders/     penjadwal notifikasi HP (dipanggil tiap menit)
+    manifest.ts           manifest PWA
   components/
     notch/                NotchShell (animasi), Notch (4 keadaan), NotchApp
     workspace/            WorkspaceApp, TaskTimeline, dayTabs

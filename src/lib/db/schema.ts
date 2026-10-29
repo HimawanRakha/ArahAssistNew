@@ -68,4 +68,18 @@ export const taskReminders = pgTable("task_reminders", {
   remindAt: timestamp("remind_at", { withTimezone: true }),
   snoozeMinutes: integer("snooze_minutes"),
   reminderState: text("reminder_state").$type<ReminderState>().notNull().default("waiting"),
+  /** remind_at yang sudah dikirimi notifikasi HP; berbeda dari remind_at (mis. setelah Snooze) berarti kirim lagi */
+  pushedFor: timestamp("pushed_for", { withTimezone: true }),
+});
+
+// Perangkat (browser/HP) yang menerima notifikasi pengingat lewat web push
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -7,6 +7,7 @@ import { FILE_DRAG_TYPE } from "@/components/notch/Notch";
 import { LogoMark } from "@/components/LogoMark";
 import { FileTypeIcon, TaskTimeline } from "./TaskTimeline";
 import { AddTaskCard } from "./AddTaskCard";
+import { PhoneReminderCard } from "./PhoneReminderCard";
 import { buildDayTabs, tabStats, type DayTab } from "./dayTabs";
 import { dayKey, formatDay, formatTime, remainingLabel } from "@/lib/client";
 import { useNow } from "@/lib/useNow";
@@ -333,6 +334,7 @@ function TabContent({ tab, user, files, now, filter, onFilter, onLogout, onAdd, 
         </div>
         <aside className="space-y-3 lg:sticky lg:top-6">
           <AchievementCard tab={tab} />
+          <PhoneReminderCard />
           <div className="rounded-[22px] bg-white/60 p-4 text-[13px] leading-relaxed text-redup">
             <p className="font-semibold text-malam">Menambah tugas lewat Notch</p>
             <p className="mt-1">

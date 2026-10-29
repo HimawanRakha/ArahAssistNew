@@ -112,6 +112,11 @@ export function InstallGuide() {
             <li className="rounded-[20px] border border-kabut px-4 py-3">
               <b className="font-semibold text-malam">Seret Notch</b> ke tepi kiri atau kanan layar untuk memindahkannya.
             </li>
+            <li className="rounded-[20px] bg-malam px-4 py-3 text-kabut sm:col-span-2">
+              <b className="font-semibold text-kertas">Di HP?</b> Buka website ini, pasang ke layar utama (di iPhone: Bagikan,
+              lalu Tambahkan ke Layar Utama), masuk, lalu tekan <b className="font-semibold text-kertas">Aktifkan notifikasi</b>{" "}
+              di Workspace. Pengingat akan muncul sebagai notifikasi dengan tombol ACC dan Snooze.
+            </li>
           </ul>
         </div>
       </div>
