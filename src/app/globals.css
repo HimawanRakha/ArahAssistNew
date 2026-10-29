@@ -1,26 +1,276 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Palet Arah Assist
+  Arus   #007AAD  aksi utama, garis rute aktif
+  Kabut  #D9E2E9  permukaan sekunder, garis
+  Kertas #FFFBFC  latar halaman
+  Malam  #0C1D32  teks utama, badan Notch
+*/
+@theme {
+  --color-arus: #007aad;
+  --color-arus-deep: #00618a;
+  --color-arus-soft: #e3f0f6;
+  --color-kabut: #d9e2e9;
+  --color-kabut-deep: #b9c7d3;
+  --color-panel: #e4ebf0;
+  --color-kertas: #fffbfc;
+  --color-malam: #0c1d32;
+  --color-malam-2: #162a43;
+  --color-malam-3: #213a58;
+  --color-redup: #52657a;
+  --color-acc: #2bb673;
+  --color-acc-ink: #11714a;
+  --color-snooze: #f5c518;
+  --color-snooze-ink: #7a5c00;
+  --color-bahaya: #b42318;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-notch: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* 1360px: lebar minimum agar hero landing muat tiga kolom dengan Notch 680px di tengah */
+  --breakpoint-hero: 85rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background: var(--color-kertas);
+    color: var(--color-malam);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-arus);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"],
+  label[for] {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--color-arus);
+    color: var(--color-kertas);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+  Tab map file: tab aktif menyatu dengan panel di bawahnya lewat dua lengkung cekung,
+  seperti tab folder. Lengkungnya berwarna panel dengan lubang lingkaran berwarna bingkai.
+*/
+@layer components {
+  .folder-tab {
+    --tab-r: 18px;
+    --tab-bg: var(--color-panel);
+    position: relative;
+    border-radius: var(--tab-r) var(--tab-r) 0 0;
+    background: var(--tab-bg);
+    margin-inline: var(--tab-r);
+  }
+  .folder-tab:first-child {
+    margin-left: 0;
+  }
+  .folder-tab::before,
+  .folder-tab::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: var(--tab-r);
+    height: var(--tab-r);
+    pointer-events: none;
+  }
+  .folder-tab::before {
+    left: calc(var(--tab-r) * -1);
+    background: radial-gradient(circle at 0 0, transparent var(--tab-r), var(--tab-bg) calc(var(--tab-r) + 0.5px));
+  }
+  .folder-tab::after {
+    right: calc(var(--tab-r) * -1);
+    background: radial-gradient(circle at 100% 0, transparent var(--tab-r), var(--tab-bg) calc(var(--tab-r) + 0.5px));
+  }
+  .folder-tab:first-child::before {
+    display: none;
+  }
+
+  /*
+    Potongan bingkai landing: bagian bingkai putih yang menjorok ke area hero,
+    dengan lengkung cekung di kedua sisinya (pola yang sama dengan tab map, dibalik).
+  */
+  .cut {
+    --r: 22px;
+    position: absolute;
+    z-index: 20;
+    background: var(--color-kertas);
+  }
+  .cut::before,
+  .cut::after {
+    content: "";
+    position: absolute;
+    width: var(--r);
+    height: var(--r);
+    pointer-events: none;
+  }
+  .cut-top {
+    top: 0;
+    left: 50%;
+    translate: -50% 0;
+    border-radius: 0 0 var(--r) var(--r);
+  }
+  .cut-top::before {
+    top: 0;
+    left: calc(var(--r) * -1);
+    background: radial-gradient(circle at 0 100%, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-top::after {
+    top: 0;
+    right: calc(var(--r) * -1);
+    background: radial-gradient(circle at 100% 100%, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-bottom {
+    bottom: 0;
+    left: 50%;
+    translate: -50% 0;
+    border-radius: var(--r) var(--r) 0 0;
+  }
+  .cut-bottom::before {
+    bottom: 0;
+    left: calc(var(--r) * -1);
+    background: radial-gradient(circle at 0 0, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-bottom::after {
+    bottom: 0;
+    right: calc(var(--r) * -1);
+    background: radial-gradient(circle at 100% 0, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-left {
+    left: 0;
+    top: 50%;
+    translate: 0 -50%;
+    border-radius: 0 var(--r) var(--r) 0;
+  }
+  .cut-left::before {
+    left: 0;
+    top: calc(var(--r) * -1);
+    background: radial-gradient(circle at 100% 0, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-left::after {
+    left: 0;
+    bottom: calc(var(--r) * -1);
+    background: radial-gradient(circle at 100% 100%, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-right {
+    right: 0;
+    top: 50%;
+    translate: 0 -50%;
+    border-radius: var(--r) 0 0 var(--r);
+  }
+  .cut-right::before {
+    right: 0;
+    top: calc(var(--r) * -1);
+    background: radial-gradient(circle at 0 0, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+  .cut-right::after {
+    right: 0;
+    bottom: calc(var(--r) * -1);
+    background: radial-gradient(circle at 0 100%, transparent var(--r), var(--color-kertas) calc(var(--r) + 0.5px));
+  }
+}
+
+/* Badan Notch: hitam glassy dengan kilau lembut di bagian atas, tanpa garis tepi */
+.notch-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 40%, transparent 62%),
+    linear-gradient(180deg, #18191d 0%, #0b0b0e 100%);
+}
+/* Kapsul kecil di dalam Notch untuk ikon, seperti tombol ber-ikon di dalam pil */
+.satin-chip {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 2px 6px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* Maskot: berkedip dan kertasnya mengintip, dipakai di kapsul kecil Notch */
+.mascot-animated .mascot-eye {
+  transform-box: view-box;
+  animation: mascot-blink 4.2s ease-in-out infinite;
+}
+.mascot-animated .mascot-paper {
+  animation: mascot-paper 3.4s ease-in-out infinite;
+}
+@keyframes mascot-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+@keyframes mascot-paper {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Pita berjalan di bawah hero */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee var(--marquee-duration, 36s) linear infinite;
+}
+.marquee-reverse {
+  animation-direction: reverse;
+}
+
+/* Coretan panah di atas judul hero, tergambar sekali saat halaman dibuka */
+@keyframes draw-stroke {
+  from { stroke-dashoffset: var(--len); }
+  to { stroke-dashoffset: 0; }
+}
+.draw-stroke {
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: draw-stroke 1.6s 0.3s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Kilau yang menyapu tombol kaca (tombol ACC di pengingat) */
+@keyframes glass-sheen {
+  0%, 60% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+.glass-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: glass-sheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

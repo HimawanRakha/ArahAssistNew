@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Arah Assist
 
-## Getting Started
+Workspace harian berbasis AI yang terdiri dari dua bagian:
 
-First, run the development server:
+- **Notch desktop**: aplikasi Electron berbentuk kapsul yang menempel di tengah atas layar dan selalu di atas aplikasi lain. Di sinilah file sementara ditaruh, rencana diketik, dan pengingat ACC / Snooze muncul.
+- **Workspace web**: website Next.js untuk melihat To-Do List permanen per hari (tab berbentuk map file) beserta ketercapaiannya. Dibuka dari tombol **Buka Workspace** di Notch.
+
+Dibuat untuk UINIC 8.0 dan LOGICODIX 2026.
+
+## Fitur
+
+| Fitur | Di mana | Cara pakai |
+| --- | --- | --- |
+| 1. Rak file sementara | Notch desktop, tab **Rak file** | Tarik file dari File Explorer ke Notch (otomatis membuka rak) atau klik area unggah. Maks 4 MB per file, terhapus otomatis setelah 24 jam. File juga tampil di dock bawah Workspace web dan bisa ditarik ke kartu tugas. |
+| 2. Quick plan input | Notch desktop, tab **Rencana** | `Alt + Space` dari aplikasi mana pun (atau klik Notch, atau `Ctrl + K` saat Notch aktif). Ketik rencana dengan bahasa santai, lalu **Buat To-Do List dengan AI** (`Ctrl + Enter`). |
+| 3. To-Do List permanen | Workspace web | Satu tab map per hari (Terlewat, Hari ini, Besok, ..., Tanpa jam, Riwayat). Setiap tab berisi timeline tugas, metrik, dan cincin ketercapaian. Setiap kartu punya node selesai, jam, lampiran, status, tombol **Aktifkan reminder**, dan ikon **edit** untuk mengubah judul, tanggal, dan jam (pengingat yang aktif ikut pindah ke jam baru). |
+| 4. Reminder ACC / Snooze | Notch desktop, otomatis | Saat jam tugas tiba, Notch melebar dengan bunyi halus walaupun browser tertutup. **ACC** mengubah status menjadi *Sedang dikerjakan (ACC)*. **Snooze** menunda 5, 10, atau 15 menit. |
+
+Di desktop, Notch diam sebagai kapsul kecil hitam glassy berisi maskot yang berkedip dan jam, dan membesar ke bentuk normal saat kursor diarahkan ke sana. Notch bisa **diseret** ke tepi atas, kiri, atau kanan layar (posisi tersimpan), atau dipindah lewat tab **Pengaturan** (ikon gerigi) yang juga berisi bunyi pengingat dan tombol keluar. Tab **Dashboard** menampilkan jam besar, tanggal, dan zona waktu. Tugas juga bisa ditambah **manual** tanpa AI, lewat tombol **+** di atas daftar "Hari ini" pada panel Rencana di Notch, atau tombol **Tambah tugas** di Workspace. Notch punya 4 keadaan: Idle (jam, jumlah tugas aktif, jumlah file), File Shelf, Plan Input, dan Reminder Alert.
+
+## Menjalankan
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # lalu isi nilainya
+npm run dev                  # server web + API di http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Di terminal kedua, jalankan Notch desktop:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run notch
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Di Windows PowerShell yang memblokir skrip (`npm.ps1 cannot be loaded because running scripts is disabled`), pakai `npm.cmd run dev` dan `npm.cmd run notch`.
 
-## Learn More
+Notch muncul sebagai kapsul kecil di tengah atas layar. Arahkan kursor ke sana untuk memunculkan bentuk normalnya (jam, jumlah tugas aktif, jumlah file), klik untuk membuka panel. Saat pertama kali, klik **Masuk untuk memakai Notch**, login atau daftar, dan Notch langsung terhubung. Jika server belum berjalan, Notch menampilkan "Server Arah Assist belum berjalan" dan tersambung sendiri begitu server hidup. Untuk keluar dari Notch, klik kanan ikon Arah Assist di system tray lalu pilih **Keluar**.
 
-To learn more about Next.js, take a look at the following resources:
+Notch memuat halaman `/notch` dari server. Untuk memakai server yang sudah di-deploy, set `ARAH_URL` sebelum menjalankan:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+ARAH_URL=https://arah-assist.vercel.app npm run notch
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Variabel lingkungan
 
-## Deploy on Vercel
+| Nama | Wajib | Keterangan |
+| --- | --- | --- |
+| `DATABASE_URL` | Ya, untuk deploy | Connection string Neon Postgres (pooled). Tabel dibuat otomatis saat koneksi pertama, tanpa langkah migrasi. Jika kosong, aplikasi memakai PGlite lokal di `./.data/pglite` (khusus development). |
+| `GEMINI_API_KEY` | Disarankan | API key dari https://aistudio.google.com/apikey. Jika kosong atau Gemini gagal, rencana dipecah oleh parser lokal berbasis aturan, jadi demo tetap jalan. |
+| `GEMINI_MODEL` | Tidak | Daftar model dipisah koma, default `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash`. Jika model pertama sibuk atau belum menjawab dalam 6 detik, model berikutnya ikut dicoba dan jawaban tercepat dipakai. Setelah 30 detik tanpa jawaban, rencana dipecah oleh parser lokal. |
+| `AUTH_SECRET` | Ya, di production | Rahasia penanda tangan cookie sesi (string acak 32 byte). |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Deploy ke Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push repo ke GitHub, lalu import di Vercel.
+2. Isi `DATABASE_URL`, `GEMINI_API_KEY`, dan `AUTH_SECRET` di Project Settings > Environment Variables.
+3. Deploy. File di rak Notch disimpan di Postgres (base64), jadi aman di filesystem serverless Vercel.
+
+## Arsitektur
+
+- **Notch desktop** (`desktop/main.cjs`): jendela Electron transparan tanpa bingkai, `alwaysOnTop`, menempel di tepi atas layar utama. Ukuran jendela mengikuti keadaan Notch (kapsul kecil saat idle, lebih besar saat panel terbuka) agar tidak menghalangi klik ke aplikasi lain. Pintasan global `Alt + Space` (cadangan `Ctrl + Alt + Space` jika sudah dipakai sistem), ikon tray, dan jendela login. Tombol **Buka Workspace** membuat tautan masuk berumur 2 menit (`/api/auth/handoff`) lalu membukanya di browser default, jadi tidak perlu login dua kali.
+- Notch desktop dan Workspace web saling sinkron setiap 15 detik dan setiap kali jendela kembali difokus.
+
+- **Next.js 16** (App Router) + Tailwind CSS 4 + Motion untuk animasi Notch.
+- **Drizzle ORM** di atas Neon serverless (HTTP), skema di `src/lib/db/schema.ts` mengikuti brief: `users`, `workspaces`, `todo_items`, `notch_temp_files`, `task_reminders`.
+- **Auth**: email + kata sandi (bcrypt), sesi JWT di cookie httpOnly.
+- **AI**: `src/lib/ai.ts` memanggil Gemini dengan JSON schema terstruktur. Gemini menerima daftar file di rak agar bisa memilih file yang relevan untuk tiap tugas.
+
+```
+desktop/
+  main.cjs                aplikasi Electron (jendela Notch, posisi & seret, tray, pintasan)
+  assets/                 ikon maskot (icon.png, tray.png) hasil render src/app/icon.svg
+  preload.cjs             jembatan aman ke halaman /notch
+src/
+  app/
+    page.tsx              landing + demo Notch
+    masuk/, daftar/       login & register
+    workspace/            Workspace web (tab per hari)
+    notch/                isi jendela Notch desktop
+    api/
+      auth/               register, login, logout
+      plan/               kalimat rencana -> AI -> todo_items + lampiran
+      todos/[id]/         status, hapus, reminder (enable/disable/acc/snooze)
+      files/[id]/         unggah, unduh, tempel ke tugas, hapus
+  components/
+    notch/                NotchShell (animasi), Notch (4 keadaan), NotchApp
+    workspace/            WorkspaceApp, TaskTimeline, dayTabs
+  lib/                    db, auth, ai, helper klien
+```
+
+## Palet
+
+| Token | Hex | Peran |
+| --- | --- | --- |
+| Arus | `#007AAD` | Aksi utama, garis rute |
+| Kabut | `#D9E2E9` | Permukaan sekunder, garis |
+| Kertas | `#FFFBFC` | Latar |
+| Malam | `#0C1D32` | Teks dan badan Notch |
