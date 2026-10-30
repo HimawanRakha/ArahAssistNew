@@ -17,6 +17,9 @@ export const maxDuration = 60;
 
 const WEEKDAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
+/** Tugas yang jamnya baru lewat sebentar (mis. "jam 10" diketik pukul 10.03) tetap diberi pengingat */
+const REMIND_GRACE_MS = 5 * 60 * 1000;
+
 export async function POST(request: Request) {
   const user = await requireUser();
   if (user instanceof NextResponse) return user;
@@ -48,12 +51,19 @@ export async function POST(request: Request) {
   }
 
   // Simpan semua tugas dan pengingatnya dalam dua query agar cepat walau database jauh
-  const rows = result.tasks.map((task) => ({
-    id: crypto.randomUUID(),
-    title: task.title,
-    scheduledTime: task.time ? toUtc(task.date, task.time, tzOffset) : null,
-    fileIds: task.fileIds,
-  }));
+  const now = Date.now();
+  const rows = result.tasks.map((task) => {
+    const scheduledTime = task.time ? toUtc(task.date, task.time, tzOffset) : null;
+    return {
+      id: crypto.randomUUID(),
+      title: task.title,
+      scheduledTime,
+      // Sama seperti tambah manual, pengingat langsung aktif untuk tugas berjam. Jam yang sudah lewat dilewati
+      // agar Notch tidak langsung memunculkan setumpuk pengingat untuk kegiatan yang sudah berlalu.
+      reminder: !!scheduledTime && scheduledTime.getTime() > now - REMIND_GRACE_MS,
+      fileIds: task.fileIds,
+    };
+  });
   await db.insert(schema.todoItems).values(
     rows.map((r) => ({
       id: r.id,
@@ -66,7 +76,7 @@ export async function POST(request: Request) {
     rows.map((r) => ({
       id: crypto.randomUUID(),
       todoItemId: r.id,
-      isEnabled: false,
+      isEnabled: r.reminder,
       remindAt: r.scheduledTime,
     })),
   );
@@ -91,6 +101,8 @@ export async function POST(request: Request) {
     mode: result.mode,
     note: result.note,
     created: createdIds,
+    remindersOn: rows.filter((r) => r.reminder).length,
+    remindersSkipped: rows.filter((r) => r.scheduledTime && !r.reminder).length,
     attachedFiles: usedFiles.size,
     todos,
     files,

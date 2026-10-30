@@ -413,7 +413,7 @@ function DemoView({ mode, demo }: { mode: Exclude<NotchMode, "peek">; demo: Retu
     case "result":
       return (
         <ResultView
-          run={{ status: "done", summary: "2 file dari rak ditempel otomatis.", createdIds: demo.todos.map((t) => t.id) }}
+          run={{ status: "done", summary: "Pengingat aktif untuk 3 tugas. 2 file dari rak ditempel otomatis.", createdIds: demo.todos.map((t) => t.id) }}
           todos={demo.todos}
           onOpenWorkspace={noop}
           onClose={noop}

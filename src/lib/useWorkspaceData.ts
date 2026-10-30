@@ -117,12 +117,18 @@ export function useWorkspaceData(
       todos: TodoDTO[];
       files: ShelfFileDTO[];
       created: string[];
+      remindersOn: number;
+      remindersSkipped: number;
       attachedFiles: number;
       note?: string;
     }>("/api/plan", { method: "POST", json: { text, tzOffset: new Date().getTimezoneOffset() } });
     setTodos(data.todos);
     setFiles(data.files);
     const parts: string[] = [];
+    if (data.remindersOn) parts.push(`Pengingat aktif untuk ${data.remindersOn} tugas.`);
+    if (data.remindersSkipped) {
+      parts.push(`${data.remindersSkipped} tugas tidak diberi pengingat karena jamnya sudah lewat.`);
+    }
     if (data.attachedFiles) parts.push(`${data.attachedFiles} file dari rak ditempel otomatis.`);
     if (data.note) parts.push(data.note);
     return { summary: parts.join(" "), createdIds: data.created };

@@ -265,6 +265,12 @@
   }
 }
 
+/* Scrollbar tipis untuk daftar di dalam Notch yang gelap, cukup terlihat sebagai tanda bisa digulir */
+@utility scrollbar-notch {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

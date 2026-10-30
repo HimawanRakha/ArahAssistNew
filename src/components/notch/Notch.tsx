@@ -882,6 +882,19 @@ function TodayList({ todos, now, onAdd }: { todos: TodoDTO[]; now: number | null
         .sort((a, b) => a.scheduledTime!.localeCompare(b.scheduledTime!))
     : [];
   const done = items.filter((t) => t.status === "completed").length;
+  const nextId = items.find((t) => t.status !== "completed")?.id;
+  const scrollable = items.length > 4;
+
+  // Saat panel dibuka, gulir sekali ke tugas pertama yang belum selesai agar tugas berikutnya langsung terlihat
+  const listRef = useRef<HTMLUListElement>(null);
+  const scrolled = useRef(false);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || scrolled.current || !nextId) return;
+    scrolled.current = true;
+    const target = list.querySelector<HTMLElement>(`[data-id="${nextId}"]`);
+    if (target) list.scrollTop = target.offsetTop;
+  }, [nextId]);
 
   return (
     <section aria-label="Tugas hari ini" className="rounded-[20px] bg-white/[0.04] p-3.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
@@ -901,9 +914,14 @@ function TodayList({ todos, now, onAdd }: { todos: TodoDTO[]; now: number | null
         </button>
       </div>
       {items.length ? (
-        <ul className="mt-2.5 space-y-2">
-          {items.slice(0, 4).map((t) => (
-            <li key={t.id} className="flex gap-2.5">
+        <ul
+          ref={listRef}
+          tabIndex={scrollable ? 0 : undefined}
+          aria-label={scrollable ? `${items.length} tugas, gulir untuk melihat semua` : undefined}
+          className="scrollbar-notch relative mt-2.5 max-h-[10.75rem] space-y-2 overflow-y-auto overscroll-contain pr-1.5"
+        >
+          {items.map((t) => (
+            <li key={t.id} data-id={t.id} className="flex gap-2.5">
               <span aria-hidden className={`w-[3px] shrink-0 rounded-full ${STATUS_BAR[t.status]}`} />
               <span className="min-w-0">
                 <span className={`block truncate text-[13px] font-semibold leading-snug ${t.status === "completed" ? "text-kabut line-through" : ""}`}>
@@ -915,7 +933,6 @@ function TodayList({ todos, now, onAdd }: { todos: TodoDTO[]; now: number | null
               </span>
             </li>
           ))}
-          {items.length > 4 && <li className="pl-3.5 text-[11.5px] text-kabut/70">dan {items.length - 4} tugas lain</li>}
         </ul>
       ) : (
         <p className="mt-2.5 text-[12.5px] leading-relaxed text-kabut/70">
@@ -1141,8 +1158,11 @@ export function ResultView({
       <h2 className="mt-2.5 text-[18px] font-bold tracking-tight">{run.createdIds.length} tugas masuk ke Workspace</h2>
       {run.summary && <p className="mt-1 max-w-[34ch] text-[12.5px] leading-snug text-kabut/80">{run.summary}</p>}
       {created.length > 0 && (
-        <ul className="mt-3.5 w-full space-y-1.5 text-left">
-          {created.slice(0, 3).map((t) => (
+        <ul
+          tabIndex={created.length > 3 ? 0 : undefined}
+          className="scrollbar-notch mt-3.5 max-h-[8.4rem] w-full space-y-1.5 overflow-y-auto overscroll-contain pr-1 text-left"
+        >
+          {created.map((t) => (
             <li key={t.id} className="flex items-center gap-2.5 rounded-[14px] bg-white/[0.05] px-3 py-2">
               <span className="tabular w-11 shrink-0 text-[12.5px] font-bold text-kabut">
                 {t.scheduledTime ? formatTime(t.scheduledTime) : "--.--"}
@@ -1156,7 +1176,6 @@ export function ResultView({
               )}
             </li>
           ))}
-          {created.length > 3 && <li className="px-3 text-[11.5px] text-kabut/70">dan {created.length - 3} tugas lain</li>}
         </ul>
       )}
       <div className="mt-4 flex gap-2">
